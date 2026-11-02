@@ -1,0 +1,1556 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <title>Universal Dome Video Theater - Restored RDK Matrix & Glitch-Free</title>
+  <style>
+    html, body { margin:0; padding:0; background:#000; color:#eee; font-family:system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; height:100%; overflow:hidden; touch-action:none; }
+    
+    #uiToggleBtn {
+      position: fixed;
+      top: 12px;
+      right: 12px;
+      z-index: 300;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid #38bdf8;
+      color: #7dd3fc;
+      font-weight: 700;
+      font-size: 11px;
+      padding: 7px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+      user-select: none;
+      transition: all 0.2s;
+    }
+    #uiToggleBtn:hover { background: #0284c7; color: #fff; }
+
+    #ui { 
+      position: fixed; 
+      top: 12px; 
+      left: 12px; 
+      z-index: 100; 
+      background: rgba(8, 12, 18, 0.94); 
+      backdrop-filter: blur(10px); 
+      border: 1px solid rgba(80,180,255,0.25); 
+      border-radius: 12px; 
+      padding: 12px 14px; 
+      max-width: 440px; 
+      max-height: 92vh; 
+      overflow-y: auto; 
+      line-height: 1.25; 
+      transition: opacity 0.25s, transform 0.25s;
+    }
+    #ui.hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-15px);
+    }
+
+    #ui h1 { font-size: 14px; margin: 0 0 6px; font-weight: 700; color:#4da6ff; }
+    #ui h2 { font-size: 12px; margin: 10px 0 6px; font-weight: 700; color:#66e6b0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 3px; }
+    #ui .row { display:flex; align-items:center; gap:8px; margin:6px 0; }
+    #ui label { width: 170px; font-size: 11px; color:#ddd; }
+    #ui input[type="range"] { flex:1; accent-color: #00aa77; }
+    #ui select, #ui button { background:#151e28; color:#eee; border-radius:6px; border:1px solid #335577; padding:6px 8px; font-size:11px; }
+    #ui button { cursor:pointer; }
+    #ui button:hover { background:#203040; }
+
+    .dome-card { background: rgba(0, 170, 120, 0.12); border: 1px solid #00aa77; border-radius: 8px; padding: 10px; margin-bottom: 8px; }
+    .dome-card h3 { margin: 0 0 6px; font-size: 12px; color: #66e6b0; }
+    
+    .file-input-wrapper { display: flex; flex-direction: column; gap: 6px; }
+    #questSelectFileBtn {
+      width: 100%;
+      padding: 10px 8px;
+      font-size: 12px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #008f65, #005a3f);
+      border: 1px solid #00ffaa;
+      color: #ffffff;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 2px 8px rgba(0,255,170,0.25);
+    }
+    #questSelectFileBtn:hover { background: #00aa77; }
+    #domeFileInput { display: none; }
+    #videoStatus { font-size: 11px; color: #88ffcc; margin-top: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: bold; }
+
+    .chapter-card { background: rgba(2, 132, 199, 0.14); border: 1px solid #0284c7; border-radius: 8px; padding: 10px; margin-bottom: 8px; }
+    .chapter-card h3 { margin: 0 0 6px; font-size: 12px; color: #38bdf8; }
+    .chapter-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; max-height: 120px; overflow-y: auto; margin-top: 6px; padding: 4px; background: rgba(0,0,0,0.3); border-radius: 6px; }
+    .chapter-btn { padding: 7px 4px; font-size: 10.5px; font-weight: 600; text-align: center; border: 1px solid #1e4e6b; background: #0d2030; color: #bae6fd; border-radius: 4px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .chapter-btn:hover { background: #1e3a5f; color: #fff; }
+    .chapter-btn.active { background: #0284c7; color: #fff; border-color: #38bdf8; box-shadow: 0 0 6px rgba(56,189,248,0.7); }
+    .video-time-row { display: flex; justify-content: space-between; font-size: 11px; color: #7dd3fc; margin-top: 6px; font-weight: bold; background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 4px; }
+    #startChapterDropdown { width: 100%; box-sizing: border-box; font-size: 11px; padding: 7px 8px; font-weight: bold; color: #f0f9ff; background: #0c283c; border: 1px solid #38bdf8; border-radius: 6px; margin-top: 4px; cursor: pointer; }
+
+    .dichoptic-card { background: rgba(140, 70, 255, 0.14); border: 1px solid #9955ff; border-radius: 8px; padding: 10px; margin-bottom: 8px; }
+    .dichoptic-card h3 { margin: 0 0 8px; font-size: 12px; color: #c499ff; font-weight: 700; }
+    .radio-group { display: flex; gap: 8px; margin-bottom: 8px; background: rgba(0,0,0,0.3); padding: 8px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.08); flex-wrap: wrap; }
+    .radio-label { display: flex; align-items: center; gap: 6px; font-size: 11px; cursor: pointer; color: #fff; font-weight: 600; width: auto !important; }
+    .radio-label input[type="radio"] { accent-color: #9955ff; cursor: pointer; }
+    #sharpnessSelect { width: 100%; box-sizing: border-box; font-size: 11px; padding: 6px 8px; font-weight: bold; color: #e8d0ff; background: #1f1430; border: 1px solid #8844ee; border-radius: 6px; margin-bottom: 8px; }
+
+    .viewmode-container { background: rgba(0,0,0,0.35); border: 1px solid #38bdf8; border-radius: 6px; padding: 8px; margin-bottom: 8px; }
+    .viewmode-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-top: 4px; }
+    .viewmode-btn { padding: 6px 2px; font-size: 10px; font-weight: bold; border-radius: 4px; cursor: pointer; border: 1px solid #335577; background: #102030; color: #94a3b8; }
+    .viewmode-btn.active { background: #0284c7; color: #fff; border-color: #38bdf8; box-shadow: 0 0 6px rgba(56,189,248,0.7); }
+
+    .color-set-row { display: flex; gap: 6px; margin-bottom: 8px; }
+    .set-select-btn { flex: 1; padding: 8px 4px; font-size: 11px; font-weight: 700; border-radius: 6px; cursor: pointer; border: 1px solid #555; background: #181924; color: #bbb; transition: all 0.2s; }
+    .set-select-btn.active-set1 { background: linear-gradient(135deg, #1f4e30, #5c1840); color: #86efac; border-color: #22c55e; box-shadow: 0 0 8px rgba(34,197,94,0.5); }
+    .set-select-btn.active-set2 { background: linear-gradient(135deg, #6b2108, #5c420e); color: #fed7aa; border-color: #f97316; box-shadow: 0 0 8px rgba(249,115,22,0.5); }
+
+    /* RDK 실험 매트릭스 스타일 (첫 번째 이미지와 100% 동일한 디자인) */
+    .rdk-container { background: rgba(0, 40, 70, 0.45); border: 1px solid #0284c7; border-radius: 8px; padding: 10px; margin-bottom: 8px; }
+    .rdk-container h4 { margin: 0 0 8px; font-size: 11px; color: #38bdf8; font-weight: bold; display: flex; align-items: center; gap: 4px; }
+
+    .status-panel { background: rgba(0,0,0,0.4); border: 1px solid rgba(56,189,248,0.3); border-radius: 6px; padding: 8px; margin-bottom: 8px; font-size: 11px; }
+    #cycleStatusLabel { color: #38bdf8; font-weight: bold; }
+    #vectorStatusLabel { color: #a5f3fc; margin-top: 3px; font-size: 10px; }
+    #freezeStatusLabel { color: #fbbf24; margin-top: 3px; font-size: 10px; font-weight: bold; }
+    #zoomStatusLabel { color: #86efac; margin-top: 3px; font-size: 10px; font-weight: bold; }
+
+    .blur-preset-container { display: flex; flex-direction: column; gap: 6px; background: rgba(0,0,0,0.25); padding: 8px; border-radius: 6px; border: 1px solid rgba(153,85,255,0.25); margin-bottom: 8px; }
+    .blur-btn-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+    .blur-btn { padding: 5px 0; font-size: 10px; font-weight: bold; background: #221535; border: 1px solid #663399; color: #d8b4fe; border-radius: 4px; cursor: pointer; text-align: center; }
+    .blur-btn:hover { background: #3c1e63; }
+    .blur-btn.active { background: #9955ff; color: #fff; border-color: #c499ff; box-shadow: 0 0 6px rgba(153,85,255,0.8); }
+    #blurPercentInput { width: 62px; padding: 4px 6px; background: #1f1430; color: #f3e8ff; border: 1px solid #9955ff; border-radius: 6px; font-size: 12px; font-weight: bold; text-align: center; outline: none; }
+
+    .freq-preset-container { display: flex; flex-direction: column; gap: 6px; background: rgba(0,0,0,0.25); padding: 8px; border-radius: 6px; border: 1px solid rgba(56,189,248,0.25); margin-bottom: 8px; }
+    .freq-btn-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+    .freq-btn { padding: 6px 0; font-size: 11px; font-weight: bold; background: #102636; border: 1px solid #1e4e6b; color: #7dd3fc; border-radius: 4px; cursor: pointer; text-align: center; }
+    .freq-btn:hover { background: #1c3c54; }
+    .freq-btn.active { background: #0284c7; color: #fff; border-color: #38bdf8; box-shadow: 0 0 6px rgba(56,189,248,0.8); }
+
+    .rec-card { background: rgba(255, 59, 48, 0.12); border: 1px solid #ff3b30; border-radius: 8px; padding: 8px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 6px; }
+    .rec-btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .rec-btn { padding: 8px 4px; font-weight: 700; font-size: 10.5px; color: #fff; border-radius: 6px; cursor: pointer; border: 1px solid #555; text-align: center; }
+    #recNonDomBtn { background: #15803d; border-color: #22c55e; }
+    #recDomBtn { background: #1e40af; border-color: #3b82f6; }
+    #recSbsBtn { background: #6b21a8; border-color: #a855f7; grid-column: 1 / -1; }
+    .recording { animation: recBlink 1.2s infinite alternate; }
+    #recNonDomBtn.recording { background: #16a34a; }
+    #recDomBtn.recording { background: #2563eb; }
+    #recSbsBtn.recording { background: #9333ea; }
+    @keyframes recBlink { 0% { opacity: 1; } 100% { opacity: 0.45; } }
+    #recStatus { font-size: 11px; color: #ff9999; text-align: center; margin-top: 2px; }
+
+    .mobile-vr-card { background: rgba(0, 160, 220, 0.15); border: 1px solid #00a0dc; border-radius: 8px; padding: 8px; margin-bottom: 8px; }
+    #mobileVrBtn { width: 100%; padding: 8px; font-weight: 700; font-size: 11px; background: #0077aa; color: #fff; border: 1px solid #00c8ff; border-radius: 6px; cursor: pointer; }
+    
+    #exitVrBtn { display: none; position: fixed; top: 12px; right: 12px; z-index: 200; background: rgba(0,0,0,0.6); color: #fff; border: 1px solid #666; border-radius: 20px; padding: 6px 14px; font-size: 12px; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+<button id="uiToggleBtn">👁️ UI 닫기 (ESC)</button>
+<button id="exitVrBtn">✕ VR 모드 종료</button>
+
+<div id="ui">
+  <h1>Universal 몰입형 돔 극장 (양안 독립 신경조절)</h1>
+
+  <!-- 1. 비디오 선택 -->
+  <div class="dome-card">
+    <h3>🎬 동영상 로더 (일반 평면 / 와이드 비디오)</h3>
+    <div class="file-input-wrapper">
+      <button id="questSelectFileBtn" type="button">📂 동영상 파일 선택 (다운로드 / 동영상 폴더)</button>
+      <input type="file" id="domeFileInput" accept="video/mp4,video/webm,video/mkv,video/avi,video/quicktime,video/*" />
+    </div>
+    <div id="videoStatus">재생할 비디오 파일을 선택해 주세요.</div>
+    <div class="row" style="margin-top:8px;">
+      <button id="playPauseBtn" style="flex:1;">▶ 재생 / 일시정지</button>
+      <button id="restartBtn" style="flex:1;">⏮ 처음부터</button>
+    </div>
+    <div class="row">
+      <label>동영상 볼륨</label>
+      <input id="domeVol" type="range" min="0" max="1" step="0.01" value="0.9" />
+    </div>
+  </div>
+
+  <!-- 2. 고화질 흑백 변환 & 챕터 시작 구간 선택 네비게이터 -->
+  <div class="chapter-card">
+    <h3>🎞️ 고화질 흑백 변환 & 시작 구간 선택 네비게이터</h3>
+    <div class="row" style="margin: 4px 0 8px;">
+      <label style="width: auto; cursor:pointer; display:flex; align-items:center; gap:6px; font-weight:bold; color:#7dd3fc;">
+        <input type="checkbox" id="grayscaleToggle" checked style="accent-color:#0284c7;" />
+        <span>🎬 초고화질 Rec.709 흑백(Grayscale) 강제 변환</span>
+      </label>
+    </div>
+
+    <div class="row">
+      <label style="width: 130px;">구간 분할 단위</label>
+      <select id="splitIntervalSelect" style="flex:1;">
+        <option value="3">3분 단위 분할 (3 min)</option>
+        <option value="5">5분 단위 분할 (5 min)</option>
+        <option value="7">7분 단위 분할 (7 min)</option>
+        <option value="10" selected>10분 단위 분할 (10 min)</option>
+        <option value="15">15분 단위 분할 (15 min)</option>
+        <option value="20">20분 단위 분할 (20 min)</option>
+        <option value="30">30분 단위 분할 (30 min)</option>
+      </select>
+    </div>
+
+    <div style="font-size: 11px; color:#ddd; margin: 8px 0 3px; font-weight:bold;">시작할 챕터 구간 바로 선택 (드롭다운):</div>
+    <select id="startChapterDropdown">
+      <option value="0">1번째 구간 시작 (00:00:00부터)</option>
+    </select>
+
+    <div class="video-time-row">
+      <span>현재 재생: <span id="currentTimeLabel">00:00:00</span></span>
+      <span>총 길이: <span id="totalDurationLabel">00:00:00</span></span>
+    </div>
+
+    <div id="chapterGrid" class="chapter-grid">
+      <div style="grid-column: 1 / -1; text-align: center; color: #64748b; font-size: 10px; padding: 6px;">
+        비디오를 로드하면 구간 버튼 목록이 생성됩니다.
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. 다이코틱 양안 선명도 & 신경조절 제어 -->
+  <div class="dichoptic-card">
+    <h3>👁️ 다이코틱 양안 선명도 & 신경조절 제어</h3>
+    
+    <div class="viewmode-container">
+      <div style="font-size:11px; color:#38bdf8; font-weight:bold;">🖥️ PC/모바일 화면 표시 모드 (View Mode):</div>
+      <div class="viewmode-grid">
+        <button id="viewNonDomBtn" class="viewmode-btn active">🟢 비우세안 (파동 이펙트)</button>
+        <button id="viewDomBtn" class="viewmode-btn">🔵 우세안 (선명화 원본)</button>
+        <button id="viewSbsBtn" class="viewmode-btn">🟣 양안 SBS 분할 뷰</button>
+      </div>
+    </div>
+
+    <div style="font-size: 11px; color:#ddd; margin-bottom: 4px;">선명도 강조 눈 선택:</div>
+    <div class="radio-group">
+      <label class="radio-label">
+        <input type="radio" name="dominantEye" value="left" id="eyeRadioLeft" />
+        <span>🔵 왼쪽 눈(Left) 더 선명하게</span>
+      </label>
+      <label class="radio-label">
+        <input type="radio" name="dominantEye" value="right" id="eyeRadioRight" checked />
+        <span>🟢 오른쪽 눈(Right) 더 선명하게</span>
+      </label>
+    </div>
+
+    <div style="font-size: 11px; color:#ddd; margin-bottom: 4px;">양안 선명도 격차 설정 (6단계):</div>
+    <select id="sharpnessSelect">
+      <option value="1">1단계: 미세한 선명도 차이 (Gentle)</option>
+      <option value="2">2단계: 자연스러운 선명도 차이 (Mild)</option>
+      <option value="3" selected>3단계: 표준 권장 선명도 차이 (Standard)</option>
+      <option value="4">4단계: 뚜렷한 샤프닝 & 블러 (High)</option>
+      <option value="5">5단계: 강력한 초고선명 & 소프트 (Ultra)</option>
+      <option value="6">6단계: 극한 선명도 대비 (Extreme Crisp)</option>
+    </select>
+
+    <div style="font-size: 11px; color:#ddd; margin-bottom: 4px;">도약 컬러 테마 선택:</div>
+    <div class="color-set-row">
+      <button id="set1Btn" class="set-select-btn active-set1">🌸 세트 1: 연두·핑크</button>
+      <button id="set2Btn" class="set-select-btn">🍁 세트 2: 단풍 적홍·바랜 은행</button>
+    </div>
+
+    <!-- [완전 복원] Coherence RDK 실험 매트릭스 3대 슬라이더 (첫 번째 이미지 원형 일치) -->
+    <div class="rdk-container">
+      <h4>🎯 Coherence RDK 실험 매트릭스 (Quest 2 성능 최적화)</h4>
+      
+      <!-- 1. 일관성 비율 (Coherence): 0% ~ 100% -->
+      <div class="row">
+        <label id="coherenceLabel" style="width: 195px;">일관성 비율 (Coherence): 40%</label>
+        <input id="rdkCoherenceSlider" type="range" min="0" max="100" step="5" value="40" />
+      </div>
+
+      <!-- 2. 이동 속도 (Speed): 0.02 ~ 0.10 UV -->
+      <div class="row">
+        <label id="speedLabel" style="width: 195px;">이동 속도 (Speed): 0.050 UV</label>
+        <input id="rdkSpeedSlider" type="range" min="0.02" max="0.10" step="0.005" value="0.050" />
+      </div>
+
+      <!-- 3. 도트 수명 (Lifetime): 0.20s ~ 0.60s -->
+      <div class="row">
+        <label id="lifetimeLabel" style="width: 195px;">도트 수명 (Lifetime): 0.40s</label>
+        <input id="rdkLifetimeSlider" type="range" min="0.2" max="0.6" step="0.02" value="0.40" />
+      </div>
+    </div>
+
+    <div class="status-panel">
+      <div id="cycleStatusLabel">🟢 [웨이브 유입 중] 2.0초 파면 형성</div>
+      <div id="vectorStatusLabel">진입 벡터: 계산 중... ➔ 각도: 0°</div>
+      <div id="freezeStatusLabel">🎮 컨트롤러 트리거: 비디오 재생 중 (트리거 당김 = 영상 정지 & 파동 지속)</div>
+      <div id="zoomStatusLabel">🕹️ 썸스틱 줌: 화면 스케일 100% (앞으로 밀면 축소/멀어짐, 당기면 확대/가까워짐)</div>
+    </div>
+
+    <!-- 블러 영역 비율 슬라이더 및 프리셋 버튼 -->
+    <div class="blur-preset-container">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-size:11px; color:#ddd; font-weight:bold;">블러 영역 비율 (0.1% ~ 1.5%):</span>
+        <div style="display:flex; align-items:center; gap:3px;">
+          <input id="blurPercentInput" type="number" min="0.1" max="1.5" step="0.1" value="0.3" />
+          <span style="font-size:11px; font-weight:bold; color:#c499ff;">%</span>
+        </div>
+      </div>
+      <div class="blur-btn-grid">
+        <button class="blur-btn" data-val="0.1">0.1%</button>
+        <button class="blur-btn" data-val="0.2">0.2%</button>
+        <button class="blur-btn active" data-val="0.3">0.3%</button>
+        <button class="blur-btn" data-val="0.4">0.4%</button>
+        <button class="blur-btn" data-val="0.5">0.5%</button>
+        <button class="blur-btn" data-val="0.6">0.6%</button>
+        <button class="blur-btn" data-val="0.8">0.8%</button>
+        <button class="blur-btn" data-val="1.0">1.0%</button>
+        <button class="blur-btn" data-val="1.2">1.2%</button>
+        <button class="blur-btn" data-val="1.5">1.5%</button>
+      </div>
+    </div>
+
+    <div class="freq-preset-container">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span id="entrainFreqLabel" style="font-size:11px; color:#ddd; font-weight:bold;">신경동조 주파수: 2.0 Hz (Delta)</span>
+      </div>
+      <div class="freq-btn-grid">
+        <button class="freq-btn" data-freq="0.5">0.5 Hz</button>
+        <button class="freq-btn" data-freq="1.0">1.0 Hz</button>
+        <button class="freq-btn" data-freq="1.5">1.5 Hz</button>
+        <button class="freq-btn active" data-freq="2.0">2.0 Hz</button>
+        <button class="freq-btn" data-freq="2.5">2.5 Hz</button>
+        <button class="freq-btn" data-freq="3.0">3.0 Hz</button>
+        <button class="freq-btn" data-freq="3.5">3.5 Hz</button>
+        <button class="freq-btn" data-freq="4.0">4.0 Hz</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. 녹화 모듈 -->
+  <div class="rec-card">
+    <div style="font-size:11px; color:#ff9999; font-weight:bold;">📹 개별 타겟 녹화 선택:</div>
+    <div class="rec-btn-grid">
+      <button id="recNonDomBtn" class="rec-btn">🟢 비우세안 녹화<br>(파동 이펙트 화면)</button>
+      <button id="recDomBtn" class="rec-btn">🔵 우세안 녹화<br>(선명화 원본 화면)</button>
+      <button id="recSbsBtn" class="rec-btn">🟣 양안 SBS 분할 녹화 (B 버튼 / Key B)</button>
+    </div>
+    <div id="recStatus">녹화 대기 중 (원하는 타겟 버튼을 클릭하세요)</div>
+  </div>
+
+  <div class="mobile-vr-card">
+    <button id="mobileVrBtn">🥽 스마트폰 수경 VR 모드 켜기</button>
+  </div>
+
+  <h2>돔 극장 줌 및 거리 제어 (컨트롤러 썸스틱 연동)</h2>
+  <div class="row">
+    <label>화면 줌 스케일 (Zoom)</label>
+    <input id="domeZoomSlider" type="range" min="0.4" max="2.2" step="0.02" value="1.0" />
+  </div>
+  <div class="row">
+    <label>오른쪽 썸스틱 줌 감도</label>
+    <input id="stickSpeed" type="range" min="0.05" max="0.5" step="0.05" value="0.20" />
+  </div>
+</div>
+
+<script type="module">
+  import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js';
+  import { VRButton } from 'https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/webxr/VRButton.js';
+
+  const $ = (sel) => document.querySelector(sel);
+  const $$ = (sel) => document.querySelectorAll(sel);
+
+  // ---------- 1. WebGL 렌더러 & 씬 초기화 ----------
+  const renderer = new THREE.WebGLRenderer({ 
+    antialias: true, 
+    alpha: false, 
+    preserveDrawingBuffer: true, 
+    powerPreference: 'high-performance' 
+  });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.xr.enabled = true;
+  document.body.appendChild(renderer.domElement);
+  document.body.appendChild(VRButton.createButton(renderer));
+  renderer.xr.setFramebufferScaleFactor(1.25);
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x000000);
+
+  const FIXED_FOV = 75.0;
+  const camera = new THREE.PerspectiveCamera(FIXED_FOV, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.set(0, 1.6, 0.0);
+
+  const camLeft = new THREE.PerspectiveCamera(FIXED_FOV, (window.innerWidth * 0.5) / window.innerHeight, 0.1, 1000);
+  camLeft.layers.set(1);
+
+  const camRight = new THREE.PerspectiveCamera(FIXED_FOV, (window.innerWidth * 0.5) / window.innerHeight, 0.1, 1000);
+  camRight.layers.set(2);
+
+  const IPD = 0.064;
+
+  const offscreenCanvas = document.createElement('canvas');
+  offscreenCanvas.width = 1920; offscreenCanvas.height = 1080;
+  const offscreenRenderer = new THREE.WebGLRenderer({ 
+    canvas: offscreenCanvas, 
+    antialias: true, 
+    preserveDrawingBuffer: true 
+  });
+  offscreenRenderer.setSize(1920, 1080);
+  offscreenRenderer.autoClear = false;
+
+  const offCamLeft = new THREE.PerspectiveCamera(FIXED_FOV, 1920 / 1080, 0.1, 1000);
+  offCamLeft.layers.set(1);
+
+  const offCamRight = new THREE.PerspectiveCamera(FIXED_FOV, 1920 / 1080, 0.1, 1000);
+  offCamRight.layers.set(2);
+
+  const sbsCamLeft = new THREE.PerspectiveCamera(FIXED_FOV, 960 / 1080, 0.1, 1000);
+  sbsCamLeft.layers.set(1);
+
+  const sbsCamRight = new THREE.PerspectiveCamera(FIXED_FOV, 960 / 1080, 0.1, 1000);
+  sbsCamRight.layers.set(2);
+
+  // ---------- 2. Web Audio 시스템 ----------
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  const audioCtx = new AudioContextClass();
+  window.addEventListener('pointerdown', () => { if (audioCtx.state === 'suspended') audioCtx.resume(); }, { once: true });
+
+  const audioStreamDest = audioCtx.createMediaStreamDestination();
+  const masterRecordGain = audioCtx.createGain();
+  masterRecordGain.gain.value = 1.0;
+  masterRecordGain.connect(audioCtx.destination);
+  masterRecordGain.connect(audioStreamDest);
+
+  const domeVideoEl = document.createElement('video');
+  domeVideoEl.crossOrigin = 'anonymous';
+  domeVideoEl.playsInline = true;
+  domeVideoEl.loop = true;
+  domeVideoEl.muted = false;
+  domeVideoEl.preload = 'auto';
+
+  let domeVideoTex = null;
+  let videoSourceNode = null;
+  const domeVideoGain = audioCtx.createGain();
+  domeVideoGain.gain.value = 0.9;
+  domeVideoGain.connect(masterRecordGain);
+
+  // ---------- 3. 돔 스크린 & 십자가 결함 원천 제거 RDK 셰이더 ----------
+  const theaterGroup = new THREE.Group();
+  scene.add(theaterGroup);
+
+  let theaterParams = {
+    radius: 25.0,
+    zoomScale: 1.0,
+    height: 1.6,
+    stickSpeed: 0.20,
+    dominantEye: 'right',
+    sharpnessLevel: 3,
+    blurPercent: 0.30,
+    entrainFreq: 2.0,
+    forceGrayscale: 1.0,
+    colorSet: 1,
+    viewMode: 'nondom',
+    // RDK 실험 파라미터 (PC와 VR에서 동일하게 반응)
+    rdkCoherence: 0.40,
+    rdkSpeed: 0.050,
+    rdkLifetime: 0.40
+  };
+
+  const DICHOPTIC_LEVELS = {
+    1: { sharpStrength: 0.6,  sharpContrast: 1.04, sharpBright: 1.00, blurRadius: 1.2, softContrast: 0.92, softBright: 0.90 },
+    2: { sharpStrength: 1.1,  sharpContrast: 1.08, sharpBright: 1.00, blurRadius: 2.2, softContrast: 0.86, softBright: 0.85 },
+    3: { sharpStrength: 1.8,  sharpContrast: 1.12, sharpBright: 1.00, blurRadius: 3.5, softContrast: 0.80, softBright: 0.80 },
+    4: { sharpStrength: 2.6,  sharpContrast: 1.18, sharpBright: 1.00, blurRadius: 5.0, softContrast: 0.72, softBright: 0.74 },
+    5: { sharpStrength: 3.5,  sharpContrast: 1.24, sharpBright: 1.00, blurRadius: 7.0, softContrast: 0.65, softBright: 0.68 },
+    6: { sharpStrength: 4.8,  sharpContrast: 1.32, sharpBright: 1.00, blurRadius: 9.5, softContrast: 0.55, softBright: 0.60 }
+  };
+
+  const waitCanvas = document.createElement('canvas');
+  waitCanvas.width = 1920; waitCanvas.height = 1080;
+  const wCtx = waitCanvas.getContext('2d');
+  wCtx.fillStyle = '#050a12';
+  wCtx.fillRect(0, 0, 1920, 1080);
+  wCtx.fillStyle = '#3a7ca5';
+  wCtx.font = 'bold 40px sans-serif';
+  wCtx.textAlign = 'center';
+  wCtx.fillText('비디오 파일을 선택하면 몰입형 돔 영상이 시작됩니다', 960, 540);
+
+  const defaultTex = new THREE.CanvasTexture(waitCanvas);
+  defaultTex.minFilter = THREE.LinearFilter;
+  defaultTex.magFilter = THREE.LinearFilter;
+  defaultTex.generateMipmaps = false;
+  defaultTex.wrapS = THREE.ClampToEdgeWrapping;
+  defaultTex.wrapT = THREE.ClampToEdgeWrapping;
+
+  const dichopticVertexShader = `
+    varying vec2 vUv;
+    void main() {
+      vUv = vec2(1.0 - uv.x, uv.y);
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+  `;
+
+  // [신규] 십자가 결함 및 번쩍임이 영구 차단된 무결점 RDK 셰이더
+  const dichopticFragmentShader = `
+    uniform sampler2D uMap;
+    uniform vec2 uTexelSize;
+    uniform float uMode;
+    uniform float uSharpness;
+    uniform float uBlurRadius;
+    uniform float uContrast;
+    uniform float uBrightness;
+    uniform float uBlurThreshold;
+    uniform vec2 uGridResolution;
+    uniform float uTime;
+    uniform float uEntrainFreq;
+    uniform float uIsStimActive;
+    uniform float uForceGrayscale;
+    uniform int uColorSet;
+
+    uniform vec2 uInDir;
+    uniform float uInFront;
+    uniform vec2 uOutDir;
+    uniform float uOutFront;
+    uniform float uGlobalFade;
+
+    uniform float uCoherence;
+    uniform float uDotSpeed;
+    uniform float uDotLifetime;
+
+    varying vec2 vUv;
+
+    // GPU 프래그먼트 미분 불연속(십자가 결함)을 원천 차단하는 정수 기반 안전 해시
+    float cleanHash(vec2 p, float seed) {
+      vec2 k = vec2(0.3183099, 0.3678794);
+      p = p * k + vec2(seed * 0.13, seed * 0.37);
+      return fract(16.0 * k.x * fract(p.x * p.y * (p.x + p.y)));
+    }
+
+    vec3 toHDGrayscale(vec3 col) {
+      vec3 linearCol = pow(col, vec3(2.2));
+      float lum = dot(linearCol, vec3(0.2126, 0.7152, 0.0722));
+      float gray = pow(lum, 1.0 / 2.2);
+      gray = clamp((gray - 0.5) * 1.06 + 0.5, 0.0, 1.0);
+      return mix(col, vec3(gray), uForceGrayscale);
+    }
+
+    void main() {
+      // 0.0 및 1.0 경계면 래핑 아티팩트 방지 클램핑
+      vec2 safeUv = clamp(vUv, vec2(0.001), vec2(0.999));
+      vec3 rawColor = texture2D(uMap, safeUv).rgb;
+      vec3 baseColor = toHDGrayscale(rawColor);
+
+      if (uMode > 0.5) {
+        vec2 step = uTexelSize * 1.25;
+        vec3 center = baseColor;
+        vec3 n = toHDGrayscale(texture2D(uMap, safeUv + vec2(0.0, step.y)).rgb);
+        vec3 s = toHDGrayscale(texture2D(uMap, safeUv - vec2(0.0, step.y)).rgb);
+        vec3 e = toHDGrayscale(texture2D(uMap, safeUv + vec2(step.x, 0.0)).rgb);
+        vec3 w = toHDGrayscale(texture2D(uMap, safeUv - vec2(step.x, 0.0)).rgb);
+        vec3 avg = (n + s + e + w) * 0.25;
+        vec3 edge = center - avg;
+        vec3 finalColor = center + edge * uSharpness;
+
+        finalColor = (finalColor - 0.5) * uContrast + 0.5;
+        finalColor *= uBrightness;
+        gl_FragColor = vec4(clamp(finalColor, 0.0, 1.0), 1.0);
+
+      } else {
+        if (uIsStimActive < 0.5 || uGlobalFade <= 0.001) {
+          gl_FragColor = vec4(baseColor, 1.0);
+          return;
+        }
+
+        // 1. 파면 프로젝션 마스킹
+        float inDist = dot(safeUv, uInDir);
+        float outDist = dot(safeUv, uOutDir);
+
+        float inMask = smoothstep(inDist - 0.18, inDist + 0.06, uInFront);
+        float outMask = 1.0 - smoothstep(outDist - 0.06, outDist + 0.18, uOutFront);
+        float waveMask = clamp(inMask * outMask * uGlobalFade, 0.0, 1.0);
+
+        if (waveMask <= 0.01) {
+          gl_FragColor = vec4(baseColor, 1.0);
+          return;
+        }
+
+        // 2. 십자가 아티팩트 없는 연속적 RDK 연산
+        vec2 gridPos = safeUv * uGridResolution;
+        vec2 cellId = floor(gridPos);
+        
+        float phaseOffset = cleanHash(cellId, 3.7);
+        float localTime = uTime + phaseOffset * uDotLifetime;
+        float lifeProgress = fract(localTime / max(uDotLifetime, 0.08));
+
+        // 코히어런스 비율 분기 (신호 점 vs 노이즈 점)
+        float dotTypeRnd = cleanHash(cellId, 5.1);
+        vec2 moveDir;
+        if (dotTypeRnd < uCoherence) {
+          moveDir = uInDir;
+        } else {
+          float randAng = cleanHash(cellId, 7.3) * 6.2831853;
+          moveDir = vec2(cos(randAng), sin(randAng));
+        }
+
+        // 이동 역추적
+        vec2 origCellId = floor(cellId - moveDir * (lifeProgress * uDotSpeed * 12.0));
+        float pickRnd = cleanHash(origCellId, 1.9);
+
+        if (pickRnd < uBlurThreshold) {
+          float lifeFade = sin(lifeProgress * 3.14159265);
+          float spatialPhase = mod(origCellId.x + origCellId.y, 2.0) > 0.5 ? 1.0 : -1.0;
+          float temporalMod = sin(uTime * uEntrainFreq * 6.2831853);
+
+          float flickerSignal = spatialPhase * temporalMod;
+          float intensity = abs(flickerSignal) * waveMask * lifeFade;
+
+          if (intensity > 0.02) {
+            vec2 step = uTexelSize * uBlurRadius;
+            vec3 c0 = toHDGrayscale(texture2D(uMap, safeUv).rgb) * 0.25;
+            vec3 c1 = toHDGrayscale(texture2D(uMap, safeUv + vec2( step.x,  0.0)).rgb) * 0.125;
+            vec3 c2 = toHDGrayscale(texture2D(uMap, safeUv + vec2(-step.x,  0.0)).rgb) * 0.125;
+            vec3 c3 = toHDGrayscale(texture2D(uMap, safeUv + vec2( 0.0,  step.y)).rgb) * 0.125;
+            vec3 c4 = toHDGrayscale(texture2D(uMap, safeUv + vec2( 0.0, -step.y)).rgb) * 0.125;
+            vec3 c5 = toHDGrayscale(texture2D(uMap, safeUv + vec2( step.x,  step.y)).rgb) * 0.0625;
+            vec3 c6 = toHDGrayscale(texture2D(uMap, safeUv + vec2(-step.x,  step.y)).rgb) * 0.0625;
+            vec3 c7 = toHDGrayscale(texture2D(uMap, safeUv + vec2( step.x, -step.y)).rgb) * 0.0625;
+            vec3 c8 = toHDGrayscale(texture2D(uMap, safeUv + vec2(-step.x, -step.y)).rgb) * 0.0625;
+            vec3 blurred = c0 + c1 + c2 + c3 + c4 + c5 + c6 + c7 + c8;
+
+            blurred = (blurred - 0.5) * uContrast + 0.5;
+            blurred *= uBrightness;
+
+            vec3 activeColor;
+            if (uColorSet == 1) {
+              activeColor = (flickerSignal > 0.0) 
+                            ? vec3(0.20, 1.00, 0.38)
+                            : vec3(1.00, 0.12, 0.68);
+            } else {
+              activeColor = (flickerSignal > 0.0)
+                            ? vec3(0.98, 0.24, 0.08)
+                            : vec3(0.94, 0.76, 0.22);
+            }
+
+            float luminance = dot(blurred, vec3(0.299, 0.587, 0.114));
+            vec3 tinted = mix(vec3(luminance), activeColor, 0.74);
+            
+            vec3 finalColor = mix(blurred, tinted, intensity * 0.75);
+            gl_FragColor = vec4(clamp(finalColor, 0.0, 1.0), 1.0);
+            return;
+          }
+        }
+
+        gl_FragColor = vec4(baseColor, 1.0);
+      }
+    }
+  `;
+
+  function createEyeMaterial() {
+    return new THREE.ShaderMaterial({
+      uniforms: {
+        uMap: { value: defaultTex },
+        uTexelSize: { value: new THREE.Vector2(1.0 / 1920.0, 1.0 / 1080.0) },
+        uMode: { value: 1.0 },
+        uSharpness: { value: 1.8 },
+        uBlurRadius: { value: 3.5 },
+        uContrast: { value: 1.12 },
+        uBrightness: { value: 1.0 },
+        uBlurThreshold: { value: 0.0030 }, // 디폴트 0.3%
+        uGridResolution: { value: new THREE.Vector2(600.0, 400.0) },
+        uTime: { value: 0.0 },
+        uEntrainFreq: { value: 2.0 },
+        uIsStimActive: { value: 1.0 },
+        uForceGrayscale: { value: 1.0 },
+        uColorSet: { value: 1 },
+        uInDir: { value: new THREE.Vector2(0.7071, 0.7071) },
+        uInFront: { value: 1.5 },
+        uOutDir: { value: new THREE.Vector2(0.7071, 0.7071) },
+        uOutFront: { value: -0.3 },
+        uGlobalFade: { value: 1.0 },
+        uCoherence: { value: 0.40 },
+        uDotSpeed: { value: 0.050 },
+        uDotLifetime: { value: 0.40 }
+      },
+      vertexShader: dichopticVertexShader,
+      fragmentShader: dichopticFragmentShader,
+      side: THREE.BackSide,
+      depthTest: true,
+      depthWrite: true
+    });
+  }
+
+  const leftEyeMat = createEyeMaterial();
+  const rightEyeMat = createEyeMaterial();
+
+  let leftDomeMesh = null;
+  let rightDomeMesh = null;
+
+  function buildFullDomeScreen() {
+    if (leftDomeMesh) {
+      theaterGroup.remove(leftDomeMesh);
+      leftDomeMesh.geometry.dispose();
+    }
+    if (rightDomeMesh) {
+      theaterGroup.remove(rightDomeMesh);
+      rightDomeMesh.geometry.dispose();
+    }
+
+    const r = theaterParams.radius;
+    const geoLeft = new THREE.SphereGeometry(r, 64, 48);
+    const geoRight = new THREE.SphereGeometry(r, 64, 48);
+
+    leftDomeMesh = new THREE.Mesh(geoLeft, leftEyeMat);
+    leftDomeMesh.position.set(0, theaterParams.height, 0);
+    leftDomeMesh.rotation.y = Math.PI * 0.5;
+    leftDomeMesh.layers.set(1);
+
+    rightDomeMesh = new THREE.Mesh(geoRight, rightEyeMat);
+    rightDomeMesh.position.set(0, theaterParams.height, 0);
+    rightDomeMesh.rotation.y = Math.PI * 0.5;
+    rightDomeMesh.layers.set(2);
+
+    theaterGroup.add(leftDomeMesh);
+    theaterGroup.add(rightDomeMesh);
+
+    applyZoomScale();
+    updateDichopticMaterials();
+  }
+
+  function applyZoomScale() {
+    theaterGroup.scale.set(theaterParams.zoomScale, theaterParams.zoomScale, theaterParams.zoomScale);
+    const pct = Math.round(theaterParams.zoomScale * 100);
+    $('#zoomStatusLabel').textContent = `🕹️ 썸스틱 줌: 화면 스케일 ${pct}% (앞으로 밀면 축소/멀어짐, 당기면 확대/가까워짐)`;
+    $('#domeZoomSlider').value = theaterParams.zoomScale.toFixed(2);
+  }
+
+  function updateDichopticMaterials() {
+    const cfg = DICHOPTIC_LEVELS[theaterParams.sharpnessLevel] || DICHOPTIC_LEVELS[3];
+    const leftIsDominant = (theaterParams.dominantEye === 'left');
+    const blurThresh = theaterParams.blurPercent / 100.0;
+    const freq = theaterParams.entrainFreq;
+    const gray = theaterParams.forceGrayscale;
+    const setNum = theaterParams.colorSet;
+
+    leftEyeMat.uniforms.uMode.value = leftIsDominant ? 1.0 : 0.0;
+    leftEyeMat.uniforms.uSharpness.value = cfg.sharpStrength;
+    leftEyeMat.uniforms.uBlurRadius.value = cfg.blurRadius;
+    leftEyeMat.uniforms.uContrast.value = leftIsDominant ? cfg.sharpContrast : cfg.softContrast;
+    leftEyeMat.uniforms.uBrightness.value = leftIsDominant ? cfg.sharpBright : cfg.softBright;
+    leftEyeMat.uniforms.uBlurThreshold.value = blurThresh;
+    leftEyeMat.uniforms.uEntrainFreq.value = freq;
+    leftEyeMat.uniforms.uForceGrayscale.value = gray;
+    leftEyeMat.uniforms.uColorSet.value = setNum;
+    leftEyeMat.uniforms.uCoherence.value = theaterParams.rdkCoherence;
+    leftEyeMat.uniforms.uDotSpeed.value = theaterParams.rdkSpeed;
+    leftEyeMat.uniforms.uDotLifetime.value = theaterParams.rdkLifetime;
+
+    rightEyeMat.uniforms.uMode.value = leftIsDominant ? 0.0 : 1.0;
+    rightEyeMat.uniforms.uSharpness.value = cfg.sharpStrength;
+    rightEyeMat.uniforms.uBlurRadius.value = cfg.blurRadius;
+    rightEyeMat.uniforms.uContrast.value = leftIsDominant ? cfg.softContrast : cfg.sharpContrast;
+    rightEyeMat.uniforms.uBrightness.value = leftIsDominant ? cfg.softBright : cfg.sharpBright;
+    rightEyeMat.uniforms.uBlurThreshold.value = blurThresh;
+    rightEyeMat.uniforms.uEntrainFreq.value = freq;
+    rightEyeMat.uniforms.uForceGrayscale.value = gray;
+    rightEyeMat.uniforms.uColorSet.value = setNum;
+    rightEyeMat.uniforms.uCoherence.value = theaterParams.rdkCoherence;
+    rightEyeMat.uniforms.uDotSpeed.value = theaterParams.rdkSpeed;
+    rightEyeMat.uniforms.uDotLifetime.value = theaterParams.rdkLifetime;
+
+    updateCameraLayers();
+  }
+
+  function updateCameraLayers() {
+    const leftIsDominant = (theaterParams.dominantEye === 'left');
+    camera.layers.disableAll();
+
+    if (theaterParams.viewMode === 'nondom') {
+      camera.layers.enable(leftIsDominant ? 2 : 1);
+    } else if (theaterParams.viewMode === 'dom') {
+      camera.layers.enable(leftIsDominant ? 1 : 2);
+    } else {
+      camera.layers.enable(leftIsDominant ? 2 : 1);
+    }
+  }
+
+  buildFullDomeScreen();
+
+  // ---------- 4. 대용량 비디오 스트리밍 & 네비게이터 ----------
+  const domeFileInput = $('#domeFileInput');
+  const questSelectFileBtn = $('#questSelectFileBtn');
+  const videoStatus = $('#videoStatus');
+  const playPauseBtn = $('#playPauseBtn');
+  const restartBtn = $('#restartBtn');
+  const domeVol = $('#domeVol');
+  const grayscaleToggle = $('#grayscaleToggle');
+  const splitIntervalSelect = $('#splitIntervalSelect');
+  const startChapterDropdown = $('#startChapterDropdown');
+  const currentTimeLabel = $('#currentTimeLabel');
+  const totalDurationLabel = $('#totalDurationLabel');
+  const chapterGrid = $('#chapterGrid');
+  const freezeStatusLabel = $('#freezeStatusLabel');
+  const cycleStatusLabel = $('#cycleStatusLabel');
+  const vectorStatusLabel = $('#vectorStatusLabel');
+  const set1Btn = $('#set1Btn');
+  const set2Btn = $('#set2Btn');
+
+  const viewNonDomBtn = $('#viewNonDomBtn');
+  const viewDomBtn = $('#viewDomBtn');
+  const viewSbsBtn = $('#viewSbsBtn');
+
+  let isUpdatingUI = false;
+
+  function setViewMode(mode) {
+    theaterParams.viewMode = mode;
+    viewNonDomBtn.classList.toggle('active', mode === 'nondom');
+    viewDomBtn.classList.toggle('active', mode === 'dom');
+    viewSbsBtn.classList.toggle('active', mode === 'sbs');
+    updateCameraLayers();
+  }
+
+  viewNonDomBtn.addEventListener('click', () => setViewMode('nondom'));
+  viewDomBtn.addEventListener('click', () => setViewMode('dom'));
+  viewSbsBtn.addEventListener('click', () => setViewMode('sbs'));
+
+  domeVideoEl.addEventListener('waiting', () => { console.warn('Video buffer waiting...'); });
+  domeVideoEl.addEventListener('stalled', () => {
+    if (!isUserFrozen && domeVideoEl.paused) {
+      domeVideoEl.play().catch(()=>{});
+    }
+  });
+
+  function formatTime(seconds) {
+    if (isNaN(seconds) || seconds < 0) return '00:00:00';
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  }
+
+  function formatDisplayTime(sec, totalDuration) {
+    const full = formatTime(sec);
+    return (totalDuration >= 3600) ? full : full.slice(3);
+  }
+
+  function buildChapterList() {
+    chapterGrid.innerHTML = '';
+    startChapterDropdown.innerHTML = '';
+
+    const duration = domeVideoEl.duration;
+    if (!duration || isNaN(duration) || duration <= 0) {
+      chapterGrid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: #64748b; font-size: 10px; padding: 6px;">영상이 로드되면 구간 목록이 표시됩니다.</div>';
+      const opt = document.createElement('option');
+      opt.value = '0';
+      opt.textContent = '1번째 구간 시작 (00:00:00부터)';
+      startChapterDropdown.appendChild(opt);
+      return;
+    }
+
+    const intervalMinutes = parseInt(splitIntervalSelect.value, 10);
+    const intervalSec = intervalMinutes * 60;
+    const totalChapters = Math.ceil(duration / intervalSec);
+
+    for (let i = 0; i < totalChapters; i++) {
+      const startSec = i * intervalSec;
+      const endSec = Math.min((i + 1) * intervalSec, duration);
+      const timeTitle = `${formatDisplayTime(startSec, duration)} ~ ${formatDisplayTime(endSec, duration)}`;
+
+      const opt = document.createElement('option');
+      opt.value = startSec;
+      opt.textContent = `${i + 1}번째 구간 시작 (${formatDisplayTime(startSec, duration)}부터)`;
+      startChapterDropdown.appendChild(opt);
+
+      const btn = document.createElement('button');
+      btn.className = 'chapter-btn';
+      btn.dataset.time = startSec;
+      btn.textContent = `구간 ${i + 1}: ${timeTitle}`;
+      
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        seekToChapter(startSec);
+      });
+      chapterGrid.appendChild(btn);
+    }
+
+    highlightActiveChapter(domeVideoEl.currentTime);
+  }
+
+  function seekToChapter(targetSec) {
+    if (!domeVideoEl.src) return;
+    domeVideoEl.currentTime = targetSec;
+    
+    if (!isUserFrozen) {
+      const playPromise = domeVideoEl.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {});
+      }
+    }
+    highlightActiveChapter(targetSec);
+  }
+
+  startChapterDropdown.addEventListener('change', (e) => {
+    if (isUpdatingUI) return;
+    const targetSec = parseFloat(e.target.value);
+    seekToChapter(targetSec);
+  });
+
+  function highlightActiveChapter(currentSec) {
+    const intervalSec = parseInt(splitIntervalSelect.value, 10) * 60;
+    const activeIdx = Math.floor(currentSec / intervalSec);
+    
+    const btns = chapterGrid.querySelectorAll('.chapter-btn');
+    btns.forEach((btn, idx) => {
+      if (idx === activeIdx) btn.classList.add('active');
+      else btn.classList.remove('active');
+    });
+
+    if (startChapterDropdown.options.length > activeIdx && activeIdx >= 0) {
+      if (startChapterDropdown.selectedIndex !== activeIdx) {
+        isUpdatingUI = true;
+        startChapterDropdown.selectedIndex = activeIdx;
+        isUpdatingUI = false;
+      }
+    }
+  }
+
+  splitIntervalSelect.addEventListener('change', buildChapterList);
+
+  grayscaleToggle.addEventListener('change', (e) => {
+    theaterParams.forceGrayscale = e.target.checked ? 1.0 : 0.0;
+    updateDichopticMaterials();
+  });
+
+  function switchColorSet(setNum) {
+    theaterParams.colorSet = setNum;
+    if (setNum === 1) {
+      set1Btn.classList.add('active-set1');
+      set2Btn.classList.remove('active-set2');
+    } else {
+      set2Btn.classList.add('active-set2');
+      set1Btn.classList.remove('active-set1');
+    }
+    updateDichopticMaterials();
+  }
+
+  set1Btn.addEventListener('click', () => switchColorSet(1));
+  set2Btn.addEventListener('click', () => switchColorSet(2));
+
+  function loadVideoFile(file) {
+    if (!file) return;
+
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    videoStatus.textContent = `⏳ 파일 스트림 로딩 중: ${file.name}...`;
+
+    const streamUrl = URL.createObjectURL(file);
+    domeVideoEl.src = streamUrl;
+    isUserFrozen = false;
+    domeVideoEl.load();
+
+    if (domeVideoTex) domeVideoTex.dispose();
+    domeVideoTex = new THREE.VideoTexture(domeVideoEl);
+    domeVideoTex.minFilter = THREE.LinearFilter;
+    domeVideoTex.magFilter = THREE.LinearFilter;
+    domeVideoTex.generateMipmaps = false;
+    domeVideoTex.wrapS = THREE.ClampToEdgeWrapping;
+    domeVideoTex.wrapT = THREE.ClampToEdgeWrapping;
+
+    leftEyeMat.uniforms.uMap.value = domeVideoTex;
+    rightEyeMat.uniforms.uMap.value = domeVideoTex;
+
+    if (!videoSourceNode) {
+      try {
+        videoSourceNode = audioCtx.createMediaElementSource(domeVideoEl);
+        videoSourceNode.connect(domeVideoGain);
+      } catch(err) {
+        console.warn('Audio node skipped:', err);
+      }
+    }
+
+    domeVideoEl.onloadedmetadata = () => {
+      const vw = domeVideoEl.videoWidth || 1920;
+      const vh = domeVideoEl.videoHeight || 1080;
+      leftEyeMat.uniforms.uTexelSize.value.set(1.0 / vw, 1.0 / vh);
+      rightEyeMat.uniforms.uTexelSize.value.set(1.0 / vw, 1.0 / vh);
+      totalDurationLabel.textContent = formatTime(domeVideoEl.duration);
+      buildChapterList();
+    };
+
+    domeVideoEl.onloadeddata = () => {
+      isUserFrozen = false;
+      domeVideoEl.play().then(() => {
+        videoStatus.textContent = `▶ 돔 극장 재생 중: ${file.name}`;
+      }).catch(() => {
+        videoStatus.textContent = `준비 완료: [▶ 재생] 버튼을 눌러주세요.`;
+      });
+      buildChapterList();
+    };
+
+    domeVideoEl.onerror = () => {
+      videoStatus.textContent = `❌ 재생 오류: 지원되는 비디오 코덱(MP4 H.264 권장)인지 확인해 주세요.`;
+    };
+  }
+
+  async function pickVideoFileQuest() {
+    if ('showOpenFilePicker' in window) {
+      try {
+        const pickerOptions = {
+          types: [{
+            description: 'Video Files',
+            accept: { 'video/*': ['.mp4', '.mkv', '.webm', '.mov', '.avi'] }
+          }],
+          excludeAcceptAllOption: false,
+          multiple: false,
+          startIn: 'downloads'
+        };
+        const [fileHandle] = await window.showOpenFilePicker(pickerOptions);
+        const file = await fileHandle.getFile();
+        loadVideoFile(file);
+        return;
+      } catch (err) {
+        if (err.name === 'AbortError') return;
+        console.warn('showOpenFilePicker fallback:', err);
+      }
+    }
+    domeFileInput.value = '';
+    domeFileInput.click();
+  }
+
+  questSelectFileBtn.addEventListener('click', pickVideoFileQuest);
+
+  domeFileInput.addEventListener('change', () => {
+    const file = domeFileInput.files && domeFileInput.files[0];
+    if (file) loadVideoFile(file);
+  });
+
+  domeVideoEl.addEventListener('timeupdate', () => {
+    if (!domeVideoEl.duration) return;
+    currentTimeLabel.textContent = formatTime(domeVideoEl.currentTime);
+    highlightActiveChapter(domeVideoEl.currentTime);
+  });
+
+  // ---------- 5. 비디오 프리징 제어 ----------
+  let isUserFrozen = false;
+
+  function toggleVideoFreeze() {
+    if (!domeVideoEl.src) return;
+    isUserFrozen = !isUserFrozen;
+
+    if (isUserFrozen) {
+      domeVideoEl.pause();
+      freezeStatusLabel.textContent = '⏸️ 영상 정지됨 (프레임 고정 상태에서 RDK 파동 지속 작동 중)';
+      freezeStatusLabel.style.color = '#ef4444';
+      videoStatus.textContent = '⏸ 프레임 정지 (RDK 활성 유지)';
+    } else {
+      domeVideoEl.play().then(() => {
+        freezeStatusLabel.textContent = '🎮 컨트롤러 트리거: 비디오 재생 중 (트리거 당김 = 영상 정지 & 파동 지속)';
+        freezeStatusLabel.style.color = '#fbbf24';
+        videoStatus.textContent = '▶ 재생 중';
+      }).catch(()=>{});
+    }
+  }
+
+  playPauseBtn.addEventListener('click', () => {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    toggleVideoFreeze();
+  });
+
+  restartBtn.addEventListener('click', () => {
+    if (!domeVideoEl.src) return;
+    domeVideoEl.currentTime = 0;
+    isUserFrozen = false;
+    domeVideoEl.play().catch(()=>{});
+  });
+
+  domeVol.addEventListener('input', e => {
+    domeVideoGain.gain.value = Number(e.target.value);
+  });
+
+  // ---------- 6. UI 및 파라미터 / 줌 / RDK 슬라이더 이벤트 바인딩 ----------
+  const uiPanel = $('#ui');
+  const uiToggleBtn = $('#uiToggleBtn');
+  let isUiVisible = true;
+
+  function setUiVisibility(visible) {
+    isUiVisible = visible;
+    if (visible) {
+      uiPanel.classList.remove('hidden');
+      uiToggleBtn.textContent = '👁️ UI 닫기 (ESC)';
+    } else {
+      uiPanel.classList.add('hidden');
+      uiToggleBtn.textContent = '👁️ UI 열기';
+    }
+  }
+
+  uiToggleBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    setUiVisibility(!isUiVisible);
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'Space') {
+      e.preventDefault();
+      toggleVideoFreeze();
+      return;
+    }
+    if (e.code === 'Escape') {
+      e.preventDefault();
+      setUiVisibility(false);
+      return;
+    }
+    if (e.code === 'KeyB') {
+      e.preventDefault();
+      toggleRecording('sbs');
+      return;
+    }
+    if (e.code === 'ArrowUp' || e.code === 'Equal') {
+      e.preventDefault();
+      theaterParams.zoomScale = Math.min(2.2, theaterParams.zoomScale + 0.05);
+      applyZoomScale();
+      return;
+    }
+    if (e.code === 'ArrowDown' || e.code === 'Minus') {
+      e.preventDefault();
+      theaterParams.zoomScale = Math.max(0.4, theaterParams.zoomScale - 0.05);
+      applyZoomScale();
+      return;
+    }
+    if (!isUiVisible) {
+      setUiVisibility(true);
+    }
+  });
+
+  $('#domeZoomSlider').addEventListener('input', (e) => {
+    theaterParams.zoomScale = parseFloat(e.target.value);
+    applyZoomScale();
+  });
+
+  $('#stickSpeed').addEventListener('input', (e) => {
+    theaterParams.stickSpeed = parseFloat(e.target.value);
+  });
+
+  // [복원] RDK 3대 슬라이더 실시간 바인딩
+  const rdkCoherenceSlider = $('#rdkCoherenceSlider');
+  const coherenceLabel = $('#coherenceLabel');
+  rdkCoherenceSlider.addEventListener('input', (e) => {
+    const val = parseInt(e.target.value, 10);
+    theaterParams.rdkCoherence = val / 100.0;
+    coherenceLabel.textContent = `일관성 비율 (Coherence): ${val}%`;
+    updateDichopticMaterials();
+  });
+
+  const rdkSpeedSlider = $('#rdkSpeedSlider');
+  const speedLabel = $('#speedLabel');
+  rdkSpeedSlider.addEventListener('input', (e) => {
+    const val = parseFloat(e.target.value);
+    theaterParams.rdkSpeed = val;
+    speedLabel.textContent = `이동 속도 (Speed): ${val.toFixed(3)} UV`;
+    updateDichopticMaterials();
+  });
+
+  const rdkLifetimeSlider = $('#rdkLifetimeSlider');
+  const lifetimeLabel = $('#lifetimeLabel');
+  rdkLifetimeSlider.addEventListener('input', (e) => {
+    const val = parseFloat(e.target.value);
+    theaterParams.rdkLifetime = val;
+    lifetimeLabel.textContent = `도트 수명 (Lifetime): ${val.toFixed(2)}s`;
+    updateDichopticMaterials();
+  });
+
+  $$('input[name="dominantEye"]').forEach(radio => {
+    radio.addEventListener('change', (e) => {
+      theaterParams.dominantEye = e.target.value;
+      updateDichopticMaterials();
+    });
+  });
+
+  $('#sharpnessSelect').addEventListener('change', (e) => {
+    theaterParams.sharpnessLevel = parseInt(e.target.value, 10);
+    updateDichopticMaterials();
+  });
+
+  const blurPercentInput = $('#blurPercentInput');
+  const blurBtns = $$('.blur-btn');
+
+  function setBlurPercent(val) {
+    val = Math.max(0.1, Math.min(1.5, parseFloat(val.toFixed(1))));
+    theaterParams.blurPercent = val;
+    blurPercentInput.value = val.toFixed(1);
+    blurBtns.forEach(b => {
+      b.classList.toggle('active', parseFloat(b.dataset.val) === val);
+    });
+    updateDichopticMaterials();
+  }
+
+  blurBtns.forEach(btn => {
+    btn.addEventListener('click', () => setBlurPercent(parseFloat(btn.dataset.val)));
+  });
+
+  blurPercentInput.addEventListener('change', (e) => {
+    let v = parseFloat(e.target.value);
+    if (isNaN(v)) v = 0.3;
+    setBlurPercent(v);
+  });
+
+  const freqBtns = $$('.freq-btn');
+  const entrainFreqLabel = $('#entrainFreqLabel');
+
+  function setEntrainFreq(freq) {
+    theaterParams.entrainFreq = freq;
+    let waveBand = 'Delta';
+    if (freq >= 4.0) waveBand = 'Theta';
+    else if (freq >= 1.5) waveBand = 'Delta';
+    else waveBand = 'Slow Delta';
+
+    entrainFreqLabel.textContent = `신경동조 주파수: ${freq.toFixed(1)} Hz (${waveBand})`;
+    freqBtns.forEach(b => {
+      b.classList.toggle('active', parseFloat(b.dataset.freq) === freq);
+    });
+    updateDichopticMaterials();
+  }
+
+  freqBtns.forEach(btn => {
+    btn.addEventListener('click', () => setEntrainFreq(parseFloat(btn.dataset.freq)));
+  });
+
+  // ---------- 7. 녹화 시스템 (MediaRecorder) ----------
+  let mediaRecorder = null;
+  let recordedChunks = [];
+  let recordingTarget = null;
+
+  const recNonDomBtn = $('#recNonDomBtn');
+  const recDomBtn = $('#recDomBtn');
+  const recSbsBtn = $('#recSbsBtn');
+  const recStatus = $('#recStatus');
+
+  function getCombinedStream() {
+    const canvasStream = offscreenCanvas.captureStream(60);
+    const audioStream = audioStreamDest.stream;
+    const combined = new MediaStream();
+    canvasStream.getVideoTracks().forEach(t => combined.addTrack(t));
+    audioStream.getAudioTracks().forEach(t => combined.addTrack(t));
+    return combined;
+  }
+
+  function startRecording(target) {
+    if (mediaRecorder && mediaRecorder.state === 'recording') return;
+    recordedChunks = [];
+    recordingTarget = target;
+
+    const stream = getCombinedStream();
+    let options = { mimeType: 'video/webm; codecs=vp9,opus' };
+    if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+      options = { mimeType: 'video/webm' };
+    }
+
+    try {
+      mediaRecorder = new MediaRecorder(stream, options);
+    } catch(e) {
+      mediaRecorder = new MediaRecorder(stream);
+    }
+
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data && e.data.size > 0) recordedChunks.push(e.data);
+    };
+
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(recordedChunks, { type: 'video/webm' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `dichoptic_rdk_${recordingTarget}_${Date.now()}.webm`;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 2000);
+
+      recNonDomBtn.classList.remove('recording');
+      recDomBtn.classList.remove('recording');
+      recSbsBtn.classList.remove('recording');
+      recStatus.textContent = '녹화 완료 및 다운로드 저장됨';
+      recordingTarget = null;
+    };
+
+    mediaRecorder.start(100);
+
+    if (target === 'nondom') {
+      recNonDomBtn.classList.add('recording');
+      recStatus.textContent = '🟢 비우세안 RDK 화면 녹화 중...';
+    } else if (target === 'dom') {
+      recDomBtn.classList.add('recording');
+      recStatus.textContent = '🔵 우세안 선명화 화면 녹화 중...';
+    } else {
+      recSbsBtn.classList.add('recording');
+      recStatus.textContent = '🟣 양안 SBS 분할 화면 녹화 중...';
+    }
+  }
+
+  function stopRecording() {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+      mediaRecorder.stop();
+      recStatus.textContent = '녹화 데이터 압축 중...';
+    }
+  }
+
+  function toggleRecording(target) {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+      stopRecording();
+    } else {
+      startRecording(target);
+    }
+  }
+
+  recNonDomBtn.addEventListener('click', () => toggleRecording('nondom'));
+  recDomBtn.addEventListener('click', () => toggleRecording('dom'));
+  recSbsBtn.addEventListener('click', () => toggleRecording('sbs'));
+
+  // ---------- 8. 모바일 VR 모드 ----------
+  const mobileVrBtn = $('#mobileVrBtn');
+  const exitVrBtn = $('#exitVrBtn');
+  let isMobileVr = false;
+
+  mobileVrBtn.addEventListener('click', () => {
+    isMobileVr = true;
+    exitVrBtn.style.display = 'block';
+    setUiVisibility(false);
+    if (document.documentElement.requestFullscreen) {
+      document.documentElement.requestFullscreen().catch(()=>{});
+    }
+  });
+
+  exitVrBtn.addEventListener('click', () => {
+    isMobileVr = false;
+    exitVrBtn.style.display = 'none';
+    setUiVisibility(true);
+    if (document.exitFullscreen) {
+      document.exitFullscreen().catch(()=>{});
+    }
+  });
+
+  // ---------- 9. 컨트롤러 상호작용 (썸스틱 줌 완벽 유지) ----------
+  let lastTriggerState = false;
+
+  function updateXRControllers(delta) {
+    const session = renderer.xr.getSession();
+    if (!session) return;
+
+    for (const source of session.inputSources) {
+      if (!source.gamepad) continue;
+      const gp = source.gamepad;
+
+      if (gp.buttons && gp.buttons.length > 0) {
+        const triggerPressed = gp.buttons[0].pressed;
+        if (triggerPressed && !lastTriggerState) {
+          toggleVideoFreeze();
+        }
+        lastTriggerState = triggerPressed;
+      }
+
+      if (source.handedness === 'right' && gp.axes && gp.axes.length >= 2) {
+        const stickY = (gp.axes.length >= 4) ? gp.axes[3] : gp.axes[1];
+        
+        if (Math.abs(stickY) > 0.12) {
+          const zoomDelta = stickY * theaterParams.stickSpeed * delta * 2.5;
+          theaterParams.zoomScale = Math.max(0.4, Math.min(2.2, theaterParams.zoomScale + zoomDelta));
+          applyZoomScale();
+        }
+      }
+    }
+  }
+
+  // ---------- 10. 동적 벡터 파동 관리 엔진 ----------
+  const CYCLE_IN_DUR = 2.0;
+  const CYCLE_STAY_DUR = 2.5;
+  const CYCLE_OUT_DUR = 1.5;
+  const CYCLE_REST_DUR = 1.0;
+  const TOTAL_CYCLE = CYCLE_IN_DUR + CYCLE_STAY_DUR + CYCLE_OUT_DUR + CYCLE_REST_DUR;
+
+  let currentCycleIndex = -1;
+  let inDir = new THREE.Vector2(1.0, 0.0);
+  let outDir = new THREE.Vector2(0.0, 1.0);
+  let inAngleDeg = 0;
+  let outAngleDeg = 90;
+
+  function pickRandomDir() {
+    const angle = Math.random() * Math.PI * 2.0;
+    return {
+      vec: new THREE.Vector2(Math.cos(angle), Math.sin(angle)),
+      deg: Math.round(angle * 180.0 / Math.PI)
+    };
+  }
+
+  function updateWaveDynamicCycle(elapsedTime) {
+    const cycleIdx = Math.floor(elapsedTime / TOTAL_CYCLE);
+    const cycleTime = elapsedTime % TOTAL_CYCLE;
+
+    if (cycleIdx !== currentCycleIndex) {
+      currentCycleIndex = cycleIdx;
+      const inD = pickRandomDir();
+      const outD = pickRandomDir();
+      inDir.copy(inD.vec);
+      outDir.copy(outD.vec);
+      inAngleDeg = inD.deg;
+      outAngleDeg = outD.deg;
+    }
+
+    let inFront = 1.8;
+    let outFront = -0.4;
+    let globalFade = 1.0;
+
+    if (cycleTime < CYCLE_IN_DUR) {
+      const progress = cycleTime / CYCLE_IN_DUR;
+      inFront = -0.4 + progress * 2.2;
+      outFront = -0.4;
+      globalFade = Math.min(1.0, progress * 1.5);
+      cycleStatusLabel.textContent = `🟢 [웨이브 유입 중] ${(CYCLE_IN_DUR - cycleTime).toFixed(1)}초 후 완전 활성`;
+      vectorStatusLabel.textContent = `진입 벡터 각도: ${inAngleDeg}° ➔ RDK 도트 형성 중`;
+
+    } else if (cycleTime < CYCLE_IN_DUR + CYCLE_STAY_DUR) {
+      const stayTime = cycleTime - CYCLE_IN_DUR;
+      inFront = 1.8;
+      outFront = -0.4;
+      globalFade = 1.0;
+      const coPct = Math.round(theaterParams.rdkCoherence * 100);
+      cycleStatusLabel.textContent = `🎯 [RDK 자극 활성] Coherence ${coPct}% 자극 중 (${(CYCLE_STAY_DUR - stayTime).toFixed(1)}s)`;
+      vectorStatusLabel.textContent = `신호 점(${coPct}%): ${inAngleDeg}° 방향 ➔ 노이즈 점(${100 - coPct}%): 랜덤 확산`;
+
+    } else if (cycleTime < CYCLE_IN_DUR + CYCLE_STAY_DUR + CYCLE_OUT_DUR) {
+      const outTime = cycleTime - (CYCLE_IN_DUR + CYCLE_STAY_DUR);
+      const progress = outTime / CYCLE_OUT_DUR;
+      inFront = 1.8;
+      outFront = -0.4 + progress * 2.2;
+      globalFade = Math.max(0.0, 1.0 - progress);
+      cycleStatusLabel.textContent = `🍁 [웨이브 소출 중] 파동이 밀려나가며 페이드아웃 (${(CYCLE_OUT_DUR - outTime).toFixed(1)}s)`;
+      vectorStatusLabel.textContent = `소멸 파면 각도: ${outAngleDeg}° ➔ 부드럽게 점 소멸`;
+
+    } else {
+      const restTime = cycleTime - (CYCLE_IN_DUR + CYCLE_STAY_DUR + CYCLE_OUT_DUR);
+      inFront = -0.4;
+      outFront = 1.8;
+      globalFade = 0.0;
+      cycleStatusLabel.textContent = `💤 [휴지기 (Rest)] 눈의 피로 완화 및 시각 휴식 (${(CYCLE_REST_DUR - restTime).toFixed(1)}s)`;
+      vectorStatusLabel.textContent = `자극 100% 차단 ➔ 원본/흑백 영상만 편안하게 시청`;
+    }
+
+    leftEyeMat.uniforms.uInDir.value.copy(inDir);
+    leftEyeMat.uniforms.uInFront.value = inFront;
+    leftEyeMat.uniforms.uOutDir.value.copy(outDir);
+    leftEyeMat.uniforms.uOutFront.value = outFront;
+    leftEyeMat.uniforms.uGlobalFade.value = globalFade;
+
+    rightEyeMat.uniforms.uInDir.value.copy(inDir);
+    rightEyeMat.uniforms.uInFront.value = inFront;
+    rightEyeMat.uniforms.uOutDir.value.copy(outDir);
+    rightEyeMat.uniforms.uOutFront.value = outFront;
+    rightEyeMat.uniforms.uGlobalFade.value = globalFade;
+  }
+
+  // ---------- 11. 메인 렌더 루프 ----------
+  const clock = new THREE.Clock();
+
+  function renderOffscreen() {
+    if (!mediaRecorder || mediaRecorder.state !== 'recording') return;
+
+    const leftIsDominant = (theaterParams.dominantEye === 'left');
+    const domLayer = leftIsDominant ? 1 : 2;
+    const nonDomLayer = leftIsDominant ? 2 : 1;
+
+    offscreenRenderer.clear();
+
+    if (recordingTarget === 'nondom') {
+      offscreenRenderer.setViewport(0, 0, 1920, 1080);
+      offCamLeft.layers.disableAll();
+      offCamLeft.layers.enable(nonDomLayer);
+      offscreenRenderer.render(scene, offCamLeft);
+
+    } else if (recordingTarget === 'dom') {
+      offscreenRenderer.setViewport(0, 0, 1920, 1080);
+      offCamLeft.layers.disableAll();
+      offCamLeft.layers.enable(domLayer);
+      offscreenRenderer.render(scene, offCamLeft);
+
+    } else if (recordingTarget === 'sbs') {
+      offscreenRenderer.setViewport(0, 0, 960, 1080);
+      sbsCamLeft.position.set(-IPD * 0.5, theaterParams.height, 0);
+      offscreenRenderer.render(scene, sbsCamLeft);
+
+      offscreenRenderer.setViewport(960, 0, 960, 1080);
+      sbsCamRight.position.set(IPD * 0.5, theaterParams.height, 0);
+      offscreenRenderer.render(scene, sbsCamRight);
+    }
+  }
+
+  renderer.setAnimationLoop(() => {
+    const delta = clock.getDelta();
+    const elapsedTime = clock.getElapsedTime();
+
+    leftEyeMat.uniforms.uTime.value = elapsedTime;
+    rightEyeMat.uniforms.uTime.value = elapsedTime;
+
+    updateWaveDynamicCycle(elapsedTime);
+    updateXRControllers(delta);
+
+    if (renderer.xr.isPresenting) {
+      renderer.render(scene, camera);
+
+    } else if (isMobileVr) {
+      renderer.autoClear = false;
+      renderer.clear();
+
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+
+      renderer.setViewport(0, 0, w * 0.5, h);
+      camLeft.position.set(-IPD * 0.5, theaterParams.height, 0);
+      renderer.render(scene, camLeft);
+
+      renderer.setViewport(w * 0.5, 0, w * 0.5, h);
+      camRight.position.set(IPD * 0.5, theaterParams.height, 0);
+      renderer.render(scene, camRight);
+
+    } else {
+      if (theaterParams.viewMode === 'sbs') {
+        renderer.autoClear = false;
+        renderer.clear();
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+
+        renderer.setViewport(0, 0, w * 0.5, h);
+        camLeft.position.set(-IPD * 0.5, theaterParams.height, 0);
+        renderer.render(scene, camLeft);
+
+        renderer.setViewport(w * 0.5, 0, w * 0.5, h);
+        camRight.position.set(IPD * 0.5, theaterParams.height, 0);
+        renderer.render(scene, camRight);
+      } else {
+        renderer.autoClear = true;
+        renderer.setViewport(0, 0, window.innerWidth, window.innerHeight);
+        renderer.render(scene, camera);
+      }
+    }
+
+    renderOffscreen();
+  });
+
+  // ---------- 12. 화면 리사이즈 핸들러 ----------
+  window.addEventListener('resize', () => {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+
+    camLeft.aspect = (w * 0.5) / h;
+    camLeft.updateProjectionMatrix();
+
+    camRight.aspect = (w * 0.5) / h;
+    camRight.updateProjectionMatrix();
+
+    renderer.setSize(w, h);
+  });
+</script>
+
+</body>
+</html>
